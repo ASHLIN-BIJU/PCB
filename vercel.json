@@ -2,5 +2,11 @@
   "version": 2,
   "buildCommand": null,
   "outputDirectory": ".",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/pcb_workshop_brochure.html"
+    }
+  ]
 }
