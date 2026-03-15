@@ -884,6 +884,32 @@
       font-size: 13px;
       letter-spacing: 1px;
     }
+
+    /* ── OTHER TEXT BOX ── */
+    .other-box {
+      margin-top: 8px;
+      animation: fadeSlideIn 0.2s ease;
+    }
+
+    .other-textarea {
+      resize: vertical;
+      min-height: 70px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
 </head>
 
@@ -923,7 +949,7 @@
       <div class="tag">PCB Workshop 2026</div>
       <h1>Design<br><span>Your Own</span><br>Power Supply PCB</h1>
       <p class="subtitle">A hands-on online workshop for electronics enthusiasts</p>
-      <p class="date-line">📅 <span class="date-ml">March 18 – 21, 2026</span> &nbsp;·&nbsp; 
+      <p class="date-line">📅 <span class="date-ml">March 18 – 21, 2026</span> &nbsp;·&nbsp;
 
       <div class="meta-row">
         <div class="meta-item">
@@ -1123,7 +1149,12 @@
                 production-ready Gerber files</label>
               <label class="radio-option"><input type="radio" name="motivation" value="Upskilling"> General electronics
                 hobby/upskilling</label>
-              <label class="radio-option"><input type="radio" name="motivation" value="Other"> Others</label>
+              <label class="radio-option"><input type="radio" name="motivation" value="Other"
+                  onchange="showOtherBox('motivation-other')"> Others</label>
+            </div>
+            <div id="motivation-other" class="other-box" style="display:none;">
+              <textarea class="form-input other-textarea" name="motivationOther"
+                placeholder="Please tell us your reason…" rows="3"></textarea>
             </div>
           </div>
 
@@ -1138,7 +1169,12 @@
                 (Schematic capture and basic layout)</label>
               <label class="radio-option"><input type="radio" name="experience" value="Advanced"> Advanced (Professional
                 or frequent designer)</label>
-              <label class="radio-option"><input type="radio" name="experience" value="Other"> Others</label>
+              <label class="radio-option"><input type="radio" name="experience" value="Other"
+                  onchange="showOtherBox('experience-other')"> Others</label>
+            </div>
+            <div id="experience-other" class="other-box" style="display:none;">
+              <textarea class="form-input other-textarea" name="experienceOther"
+                placeholder="Please describe your experience level…" rows="3"></textarea>
             </div>
           </div>
 
@@ -1146,12 +1182,19 @@
             <label class="form-label">Are you a student? (Select one to see payment details)</label>
             <div class="radio-group" id="student-type-group">
               <label class="radio-option"><input type="radio" name="studentType" value="Orion" required
-                  onchange="handleStudentType(this)"> Orion Member (Free)</label>
+                  onchange="handleStudentType(this)"> Orion Member</label>
               <label class="radio-option"><input type="radio" name="studentType" value="GECW"
-                  onchange="handleStudentType(this)"> GECW Student (₹50)</label>
+                  onchange="handleStudentType(this)"> GECW Student </label>
               <label class="radio-option"><input type="radio" name="studentType" value="Other"
-                  onchange="handleStudentType(this)"> Other College (₹100)</label>
+                  onchange="handleStudentType(this)"> Other College </label>
             </div>
+
+            <!-- College name input — shown only for Other College -->
+            <div id="other-college-box" class="other-box" style="display:none; margin-top:12px;">
+              <input type="text" class="form-input" id="otherCollegeName" name="otherCollege"
+                placeholder="Enter your college name…" autocomplete="organization">
+            </div>
+
           </div>
 
           <div id="payment-section"
@@ -1256,10 +1299,40 @@
       if (event.target == modal) closeModal();
     }
 
+    function showOtherBox(boxId) {
+      document.getElementById(boxId).style.display = 'block';
+    }
+
+    // Hide other-boxes when a non-Other option is chosen
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('input[name="motivation"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+          if (this.value !== 'Other') document.getElementById('motivation-other').style.display = 'none';
+        });
+      });
+      document.querySelectorAll('input[name="experience"]').forEach(function (r) {
+        r.addEventListener('change', function () {
+          if (this.value !== 'Other') document.getElementById('experience-other').style.display = 'none';
+        });
+      });
+    });
+
     function handleStudentType(radio) {
       paymentSection.style.display = 'block';
       const instructions = document.getElementById('payment-instructions');
       const freeMsg = document.getElementById('free-message');
+      const collegeBox = document.getElementById('other-college-box');
+      const collegeInput = document.getElementById('otherCollegeName');
+
+      // Show / hide college name field
+      if (radio.value === 'Other') {
+        collegeBox.style.display = 'block';
+        collegeInput.required = true;
+      } else {
+        collegeBox.style.display = 'none';
+        collegeInput.required = false;
+        collegeInput.value = '';
+      }
 
       if (radio.value === 'Orion') {
         instructions.style.display = 'none';
@@ -1302,6 +1375,17 @@
         try {
           const formData = new FormData(form);
           const data = Object.fromEntries(formData.entries());
+
+          // Merge "Other" values into main columns for a clean sheet
+          if (data.motivation === 'Other' && data.motivationOther) {
+            data.motivation = data.motivationOther;
+          }
+          if (data.experience === 'Other' && data.experienceOther) {
+            data.experience = data.experienceOther;
+          }
+          if (data.studentType === 'Other' && data.otherCollege) {
+            data.studentType = data.otherCollege;
+          }
 
           // Handle File Upload
           const fileInput = document.getElementById('screenshotInput');

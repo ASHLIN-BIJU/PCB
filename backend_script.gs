@@ -31,15 +31,41 @@ function doPost(e) {
       fileUrl = file.getUrl();
     }
     
-    // 3. Append data
+    // 3. Process Smart Columns (Merge "Other" inputs)
+    var motivation = data.motivation || "N/A";
+    if (motivation === "Other" && data.motivationOther) {
+      motivation = data.motivationOther;
+    }
+
+    var experience = data.experience || "N/A";
+    if (experience === "Other" && data.experienceOther) {
+      experience = data.experienceOther;
+    }
+
+    var studentStatus = data.studentType || "N/A";
+    if (studentStatus === "Other" && data.otherCollege) {
+      studentStatus = data.otherCollege;
+    }
+
+    // 4. Add header row if missing
+    if (sheet.getRange(1, 1).getValue() !== "Timestamp") {
+      sheet.insertRowBefore(1);
+      sheet.getRange(1, 1, 1, 8).setValues([[
+        "Timestamp", "Full Name", "Email", "Phone",
+        "Motivation", "Experience", "Student Status / College", "Payment Screenshot"
+      ]]);
+      sheet.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#d9ead3");
+    }
+
+    // 5. Append data (Condensed 8-column format)
     sheet.appendRow([
       new Date(),
-      data.name || "N/A",
-      data.email || "N/A",
-      data.phone || "N/A",
-      data.motivation || "N/A",
-      data.experience || "N/A",
-      data.studentType || "N/A",
+      data.name    || "N/A",
+      data.email   || "N/A",
+      data.phone   || "N/A",
+      motivation,
+      experience,
+      studentStatus,
       fileUrl
     ]);
     
