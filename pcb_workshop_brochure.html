@@ -790,6 +790,45 @@
       margin-bottom: 15px;
     }
 
+    /* Processing Overlay */
+    .processing-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 22, 35, 0.9);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(0, 212, 255, 0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .processing-text {
+      font-family: 'Share Tech Mono', monospace;
+      color: var(--accent);
+      font-size: 18px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
     /* ── CLUB BRANDING ── */
     .club-banner {
       display: flex;
@@ -1122,6 +1161,12 @@
     <div class="modal-content">
       <button class="close-modal" onclick="closeModal()">&times;</button>
 
+      <div class="processing-overlay" id="processingOverlay">
+        <div class="spinner"></div>
+        <div class="processing-text">Processing Enrollment...</div>
+        <p style="margin-top: 10px; color: var(--muted); font-size: 12px;">Please don't close this window.</p>
+      </div>
+
       <div id="form-container">
         <h2 class="form-title">Workshop Enrollment</h2>
         <form id="enrollmentForm">
@@ -1280,6 +1325,8 @@
     const qrPlaceholder = document.getElementById('qrPlaceholder');
     const successMsg = document.getElementById('success-message');
     const formContainer = document.getElementById('form-container');
+    const processingOverlay = document.getElementById('processingOverlay');
+    const closeModalBtn = document.querySelector('.close-modal');
 
     // GOOGLE APPS SCRIPT URL - CONNECTED
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyb3E-ZoylnLFlUd8zQLZOO6e-N8sQSK1PposoA--8Tl7ymabwMCq1yyFwO_cQSPWVqpw/exec';
@@ -1290,6 +1337,7 @@
     }
 
     function closeModal() {
+      if (form.disabled) return; // Prevent closing while processing
       modal.style.display = 'none';
       document.body.style.overflow = 'auto';
       // Reset form if closed
@@ -1297,6 +1345,7 @@
       paymentSection.style.display = 'none';
       formContainer.style.display = 'block';
       successMsg.style.display = 'none';
+      toggleProcessing(false);
     }
 
     window.onclick = function (event) {
@@ -1305,6 +1354,18 @@
 
     function showOtherBox(boxId) {
       document.getElementById(boxId).style.display = 'block';
+    }
+
+    function toggleProcessing(isProcessing) {
+      processingOverlay.style.display = isProcessing ? 'flex' : 'none';
+      closeModalBtn.style.display = isProcessing ? 'none' : 'block';
+      form.disabled = isProcessing;
+
+      // Disable all inputs in the form
+      const inputs = form.querySelectorAll('input, textarea, select, button');
+      inputs.forEach(input => {
+        input.disabled = isProcessing;
+      });
     }
 
     // Hide other-boxes when a non-Other option is chosen
@@ -1360,86 +1421,88 @@
         // Scroll into view if needed
         paymentSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
+    }
 
-      // Helper to read file as Base64
-      const readFile = (file) => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+    // Helper to read file as Base64
+    const readFile = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
-      form.onsubmit = async (e) => {
-        e.preventDefault();
+    form.onsubmit = async (e) => {
+      e.preventDefault();
         const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.innerText;
         submitBtn.innerText = 'Processing...';
         submitBtn.disabled = true;
 
-        try {
-          const formData = new FormData(form);
-          const data = Object.fromEntries(formData.entries());
+      try {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
 
-          // Merge "Other" values into main columns for a clean sheet
-          if (data.motivation === 'Other' && data.motivationOther) {
-            data.motivation = data.motivationOther;
-          }
-          if (data.experience === 'Other' && data.experienceOther) {
-            data.experience = data.experienceOther;
-          }
-          if (data.studentType === 'Other' && data.otherCollege) {
-            data.studentType = data.otherCollege;
-          }
+        // Merge "Other" values into main columns for a clean sheet
+        if (data.motivation === 'Other' && data.motivationOther) {
+          data.motivation = data.motivationOther;
+        }
+        if (data.experience === 'Other' && data.experienceOther) {
+          data.experience = data.experienceOther;
+        }
+        if (data.studentType === 'Other' && data.otherCollege) {
+          data.studentType = data.otherCollege;
+        }
 
-          // Handle File Upload
-          const fileInput = document.getElementById('screenshotInput');
+        // Handle File Upload
+        const fileInput = document.getElementById('screenshotInput');
           if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            // Limit file size to 5MB for GAS
-            if (file.size > 5 * 1024 * 1024) {
-              throw new Error('Screenshot is too large (max 5MB).');
-            }
-            data.screenshotBase64 = await readFile(file);
-            data.screenshotName = file.name;
-            data.screenshotMimeType = file.type;
+          const file = fileInput.files[0];
+          // Limit file size to 5MB for GAS
+          if (file.size > 5 * 1024 * 1024) {
+            throw new Error('Screenshot is too large (max 5MB).');
           }
+          data.screenshotBase64 = await readFile(file);
+          data.screenshotName = file.name;
+          data.screenshotMimeType = file.type;
+        }
 
-          await submitToBackend(data);
-        } catch (error) {
-          console.error('Submission Error:', error);
-          alert(error.message || 'There was an error. Please try again.');
+        await submitToBackend(data);
+      } catch (error) {
+        console.error('Submission Error:', error);
+        alert(error.message || 'There was an error. Please try again.');
           submitBtn.innerText = originalText;
           submitBtn.disabled = false;
-        }
-      };
+      }
+    };
 
-      async function submitToBackend(data) {
-        if (SCRIPT_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
-          alert('Apps Script URL not configured.');
-          return;
-        }
+    async function submitToBackend(data) {
+      if (SCRIPT_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+        alert('Apps Script URL not configured.');
+        toggleProcessing(false);
+        return;
+      }
 
-        // Use a timeout to avoid infinite "Processing"
-        const controller = new AbortController();
+      // Use a timeout to avoid infinite "Processing"
+      const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-        try {
-          await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify(data),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(data),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
-          formContainer.style.display = 'none';
-          successMsg.style.display = 'block';
-        } catch (err) {
-          clearTimeout(timeoutId);
-          console.error('Fetch error:', err);
-          throw new Error('Connection failed. Please check if the Google Apps Script is deployed correctly.');
-        }
+        toggleProcessing(false);
+        formContainer.style.display = 'none';
+        successMsg.style.display = 'block';
+      } catch (err) {
+        clearTimeout(timeoutId);
+        console.error('Fetch error:', err);
+        throw new Error('Connection failed. Please check if the Google Apps Script is deployed correctly.');
       }
     }
   </script>
