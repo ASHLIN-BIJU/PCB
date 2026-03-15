@@ -567,10 +567,24 @@
 
     .register-btn:hover {
       color: var(--bg);
+      background: var(--accent2);
+      border-color: var(--accent2);
     }
 
     .register-btn:hover::before {
       transform: scaleX(1);
+      background: var(--accent2);
+    }
+
+    .register-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      border-color: var(--muted);
+      color: var(--muted);
+    }
+
+    .register-btn:disabled:hover::before {
+      transform: scaleX(0);
     }
 
     /* PCB trace SVG decorations */
@@ -1313,6 +1327,22 @@
         </div>
 
         <button class="register-btn" style="margin-top: 16px;" onclick="closeModal()">Close</button>
+
+        <!-- KiCad Download Section -->
+        <div
+          style="margin-top: 24px; padding: 15px; border: 1px solid var(--border); background: rgba(0, 212, 255, 0.03);">
+          <p
+            style="font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">
+            🛠️ Required Software
+          </p>
+          <p style="font-size: 13px; color: var(--text); margin-bottom: 12px;">
+            Please download and install <strong>KiCad EDA</strong> before the workshop starts.
+          </p>
+          <a href="https://www.kicad.org/download/" target="_blank"
+            style="color: var(--accent); text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+            Download KiCad Official →
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -1433,10 +1463,10 @@
 
     form.onsubmit = async (e) => {
       e.preventDefault();
-        const submitBtn = document.getElementById('submitBtn');
-        const originalText = submitBtn.innerText;
-        submitBtn.innerText = 'Processing...';
-        submitBtn.disabled = true;
+      const submitBtn = document.getElementById('submitBtn');
+      const originalText = submitBtn.innerText;
+      submitBtn.innerText = 'Processing...';
+      submitBtn.disabled = true;
 
       try {
         const formData = new FormData(form);
@@ -1455,7 +1485,7 @@
 
         // Handle File Upload
         const fileInput = document.getElementById('screenshotInput');
-          if (fileInput.files.length > 0) {
+        if (fileInput.files.length > 0) {
           const file = fileInput.files[0];
           // Limit file size to 5MB for GAS
           if (file.size > 5 * 1024 * 1024) {
@@ -1470,8 +1500,8 @@
       } catch (error) {
         console.error('Submission Error:', error);
         alert(error.message || 'There was an error. Please try again.');
-          submitBtn.innerText = originalText;
-          submitBtn.disabled = false;
+        submitBtn.innerText = originalText;
+        submitBtn.disabled = false;
       }
     };
 
@@ -1484,7 +1514,7 @@
 
       // Use a timeout to avoid infinite "Processing"
       const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
       try {
         await fetch(SCRIPT_URL, {
