@@ -1165,7 +1165,7 @@
           style="width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 4px rgba(232,25,44,0.5));">
         <img src="./orion.png" alt="Orion" style="height:14px;object-fit:contain;">
       </div>
-      <button class="register-btn" onclick="openModal()">Enroll Now</button>
+      <button class="register-btn" disabled onclick="openModal()">Registration Closed</button>
     </footer>
 
   </div>
@@ -1362,8 +1362,10 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyb3E-ZoylnLFlUd8zQLZOO6e-N8sQSK1PposoA--8Tl7ymabwMCq1yyFwO_cQSPWVqpw/exec';
 
     function openModal() {
-      modal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
+      alert("Registration has closed for this workshop. Thank you for your interest!");
+      return;
+      // modal.style.display = 'flex';
+      // document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
